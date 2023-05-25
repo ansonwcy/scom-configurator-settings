@@ -1,0 +1,32 @@
+{
+  "name": "@scom/scom-configurator-settings",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "plugin": "dist",
+  "pluginTypes": "pluginTypes/index.d.ts",
+  "types": "pluginTypes/index.d.ts",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "copy": "sh ./scripts/copy.sh",
+    "build": "rm -rf dist && npx @ijstech/compiler && npm run copy",
+    "test": "cd test && npm run test && cd .."
+  },
+  "dependencies": {
+    "@scom/scom-dapp-container": "^0.1.4",
+    "@scom/scom-table": "^0.1.1",
+    "@scom/scom-counter": "^0.1.1",
+    "@scom/scom-pie-chart": "^0.1.1",
+    "@scom/scom-bar-chart": "^0.1.1",
+    "@scom/scom-line-chart": "^0.1.1",
+    "@scom/scom-area-chart": "^0.1.1",
+    "@scom/scom-scatter-chart": "^0.1.1",
+    "@scom/scom-mixed-chart": "^0.1.1"
+  },
+  "devDependencies": {
+    "@ijstech/cli": "^0.1.26",
+    "@ijstech/compiler": "^0.1.18",
+    "@ijstech/components": "^0.1.29"
+  }
+}
