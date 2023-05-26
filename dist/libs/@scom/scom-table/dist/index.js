@@ -462,7 +462,7 @@ define("@scom/scom-table", ["require", "exports", "@ijstech/components", "@scom/
                                 if (!userInputData)
                                     return;
                                 oldTag = JSON.parse(JSON.stringify(this.tag));
-                                if (builder)
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
                                     builder.setTag(userInputData);
                                 else
                                     this.setTag(userInputData);
@@ -471,7 +471,7 @@ define("@scom/scom-table", ["require", "exports", "@ijstech/components", "@scom/
                                 if (!userInputData)
                                     return;
                                 this.tag = JSON.parse(JSON.stringify(oldTag));
-                                if (builder)
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
                                     builder.setTag(this.tag);
                                 else
                                     this.setTag(this.tag);
@@ -485,6 +485,7 @@ define("@scom/scom-table", ["require", "exports", "@ijstech/components", "@scom/
             return actions;
         }
         getConfigurators() {
+            const self = this;
             return [
                 {
                     name: 'Builder Configurator',
@@ -505,6 +506,21 @@ define("@scom/scom-table", ["require", "exports", "@ijstech/components", "@scom/
                     target: 'Embedders',
                     getActions: () => {
                         return this._getActions(this.getPropertiesSchema(true), this.getThemeSchema(true));
+                    },
+                    getLinkParams: () => {
+                        const data = this._data || {};
+                        return {
+                            data: window.btoa(JSON.stringify(data))
+                        };
+                    },
+                    setLinkParams: async (params) => {
+                        if (params.data) {
+                            const utf8String = decodeURIComponent(params.data);
+                            const decodedString = window.atob(utf8String);
+                            const newData = JSON.parse(decodedString);
+                            let resultingData = Object.assign(Object.assign({}, self._data), newData);
+                            await this.setData(resultingData);
+                        }
                     },
                     getData: this.getData.bind(this),
                     setData: this.setData.bind(this),

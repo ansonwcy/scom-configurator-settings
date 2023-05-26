@@ -131,7 +131,7 @@ declare module "@scom/scom-pie-chart" {
         private getPropertiesSchema;
         private getThemeSchema;
         private _getActions;
-        getConfigurators(): {
+        getConfigurators(): ({
             name: string;
             target: string;
             getActions: () => ({
@@ -178,10 +178,66 @@ declare module "@scom/scom-pie-chart" {
                 userInputUISchema?: undefined;
             })[];
             getData: any;
+            setData: (data: IPieChartConfig) => Promise<void>;
+            getTag: any;
+            setTag: any;
+            getLinkParams?: undefined;
+            setLinkParams?: undefined;
+        } | {
+            name: string;
+            target: string;
+            getActions: () => ({
+                name: string;
+                icon: string;
+                command: (builder: any, userInputData: any) => {
+                    execute: () => Promise<void>;
+                    undo: () => void;
+                    redo: () => void;
+                };
+                userInputDataSchema: IDataSchema;
+                userInputUISchema: {
+                    type: string;
+                    elements: ({
+                        type: string;
+                        scope: string;
+                        title: string;
+                        options?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        title?: undefined;
+                        options?: undefined;
+                    } | {
+                        type: string;
+                        scope: string;
+                        options: {
+                            detail: {
+                                type: string;
+                            };
+                        };
+                        title?: undefined;
+                    })[];
+                };
+            } | {
+                name: string;
+                icon: string;
+                command: (builder: any, userInputData: any) => {
+                    execute: () => Promise<void>;
+                    undo: () => void;
+                    redo: () => void;
+                };
+                userInputDataSchema: IDataSchema;
+                userInputUISchema?: undefined;
+            })[];
+            getLinkParams: () => {
+                data: string;
+            };
+            setLinkParams: (params: any) => Promise<void>;
+            getData: any;
             setData: any;
             getTag: any;
             setTag: any;
-        }[];
+        })[];
         private updateStyle;
         private updateTheme;
         private onUpdateBlock;

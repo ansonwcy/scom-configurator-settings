@@ -408,7 +408,7 @@ define("@scom/scom-pie-chart", ["require", "exports", "@ijstech/components", "@s
                                 if (!userInputData)
                                     return;
                                 oldTag = Object.assign({}, this.tag);
-                                if (builder)
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
                                     builder.setTag(userInputData);
                                 else
                                     this.setTag(userInputData);
@@ -417,7 +417,7 @@ define("@scom/scom-pie-chart", ["require", "exports", "@ijstech/components", "@s
                                 if (!userInputData)
                                     return;
                                 this.tag = Object.assign({}, oldTag);
-                                if (builder)
+                                if (builder === null || builder === void 0 ? void 0 : builder.setTag)
                                     builder.setTag(oldTag);
                                 else
                                     this.setTag(oldTag);
@@ -431,6 +431,7 @@ define("@scom/scom-pie-chart", ["require", "exports", "@ijstech/components", "@s
             return actions;
         }
         getConfigurators() {
+            const self = this;
             return [
                 {
                     name: 'Builder Configurator',
@@ -451,6 +452,21 @@ define("@scom/scom-pie-chart", ["require", "exports", "@ijstech/components", "@s
                     target: 'Embedders',
                     getActions: () => {
                         return this._getActions(this.getPropertiesSchema(true), this.getThemeSchema(true));
+                    },
+                    getLinkParams: () => {
+                        const data = this._data || {};
+                        return {
+                            data: window.btoa(JSON.stringify(data))
+                        };
+                    },
+                    setLinkParams: async (params) => {
+                        if (params.data) {
+                            const utf8String = decodeURIComponent(params.data);
+                            const decodedString = window.atob(utf8String);
+                            const newData = JSON.parse(decodedString);
+                            let resultingData = Object.assign(Object.assign({}, self._data), newData);
+                            await this.setData(resultingData);
+                        }
                     },
                     getData: this.getData.bind(this),
                     setData: this.setData.bind(this),
