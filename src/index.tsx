@@ -49,6 +49,7 @@ export default class ConfiguratorSettings extends Module {
   private item: any;
   private currentId = 0;
   private _data = [];
+  private _direction = false;
 
   @observable()
   private totalPage = 0;
@@ -65,6 +66,15 @@ export default class ConfiguratorSettings extends Module {
 
   get data() {
     return this._data || [];
+  }
+
+  set direction(value: boolean) {
+    this._direction = value;
+    this.updateFormStyle();
+  }
+
+  get direction() {
+    return this._direction;
   }
 
   static async create(options?: ScomConfiguratorElement, parent?: Container) {
@@ -85,6 +95,15 @@ export default class ConfiguratorSettings extends Module {
 
   private get componentsDataPagination() {
     return this.componentsData.slice(this.itemStart, this.itemEnd);
+  }
+
+  private updateFormStyle = () => {
+    if (!this.pnlTabs) return;
+    if (this.direction) {
+      this.pnlTabs.classList.add('is-direction');
+    } else {
+      this.pnlTabs.classList.remove('is-direction');
+    }
   }
 
   private onSelectIndex = () => {
@@ -119,7 +138,7 @@ export default class ConfiguratorSettings extends Module {
         width: 'calc(33.33% - 7px)',
         minWidth: 200,
         minHeight: 100,
-        border: { radius: 8, width: 1, style: 'solid', color: Theme.divider },
+        border: { radius: 8, width: 1, style: 'solid', color: Theme.text.primary },
         padding: { top: 10, bottom: 10, left: 10, right: 10 }
       });
       pnl.classList.add('pointer');
@@ -151,10 +170,14 @@ export default class ConfiguratorSettings extends Module {
     this.pnlPreview.clearInnerHTML();
   }
 
-  private showDetail = async (item: any) => {
+  showDetail = async (item: any) => {
     this.currentId = item.id;
     this.item = item;
-    const containerModule: any = await getComponent(item.name);
+    let name = item.name;
+    if (!name) {
+      name = this.data.find(f => f.id == this.currentId).name;
+    }
+    const containerModule: any = await getComponent(name);
     this.pnlPreview.clearInnerHTML();
     this.pnlPreview.appendChild(<i-label caption="Preview" font={{ size: '16px', bold: true }} margin={{ bottom: 10 }} />);
     this.pnlPreview.appendChild(containerModule);
@@ -179,7 +202,7 @@ export default class ConfiguratorSettings extends Module {
     const data = this.builderTarget?.getData ? await this.builderTarget.getData() : this.item.properties;
     const tag = this.builderTarget?.getTag ? await this.builderTarget.getTag() : this.item.tag;
     this.mdSettings.visible = false;
-    if (this.onSaveConfigData) this.onSaveConfigData({ componentId: this.currentId, ...data }, tag);
+    if (this.onSaveConfigData) this.onSaveConfigData({ componentId: Number(this.currentId), ...data }, tag);
   }
 
   private onConfirm = (result: boolean, data: any, action: any) => {
@@ -191,15 +214,35 @@ export default class ConfiguratorSettings extends Module {
     }
   }
 
+  private renderTab = (tabs: Tabs, target: any, data: any, defaultOptions: IRenderUIOptions, title: string) => {
+    if (target) {
+      const opt = {
+        ...defaultOptions,
+        jsonSchema: target.userInputDataSchema,
+        jsonUISchema: target.userInputUISchema,
+        data: data
+      }
+      const tab = new Panel();
+      tab.classList.add('custom-settings--ui');
+      tabs.add({ caption: title, icon: target.icon ? { name: target.icon, fill: Theme.colors.primary.contrastText } : undefined, children: tab });
+      if (target.customUI) {
+        const element = target.customUI.render({ ...data }, (result: boolean, data: any) => this.onConfirm(result, data, target));
+        tab.append(element);
+      } else {
+        renderUI(tab, opt, (result: boolean, data: any) => this.onConfirm(result, data, target));
+      }
+    }
+  }
+
   private renderSettings = async (builderTarget: any, item: any) => {
     this.builderTarget = builderTarget;
     const data = builderTarget?.getData ? await builderTarget.getData() : item.properties;
     const tag = builderTarget?.getTag ? await builderTarget.getTag() : item.tag;
     const actions = builderTarget?.getActions() || [];
-    const general = actions.find((v: any) => ['Settings', 'General'].includes(v.name) && !v.customUI);
-    const commissions = actions.find((v: any) => v.name === 'Commissions');
+    const general = actions.find((v: any) => ['Settings', 'General'].includes(v.name));
+    const commissions = actions.find((v: any) => ['Commissions'].includes(v.name));
     const theme = actions.find((v: any) => ['Theme Settings', 'Theme'].includes(v.name));
-    const advanced = actions.find((v: any) => ['Settings', 'General'].includes(v.name) && v.customUI);
+    const advanced = actions.find((v: any) => ['Advanced'].includes(v.name));
     const tabs = await Tabs.create();
     this.pnlTabs.clearInnerHTML();
     this.pnlTabs.appendChild(tabs);
@@ -212,61 +255,16 @@ export default class ConfiguratorSettings extends Module {
       jsonSchema: {},
       data
     }
-    if (general) {
-      const opt = {
-        ...defaultOptions,
-        jsonSchema: general.userInputDataSchema,
-        jsonUISchema: general.userInputUISchema,
-        data: data
-      }
-      const tab = new Panel();
-      tabs.add({ caption: 'General', children: tab });
-      renderUI(tab, opt, (result: boolean, data: any) => this.onConfirm(result, data, general));
-    }
-    if (commissions) {
-      const opt = {
-        ...defaultOptions,
-        jsonSchema: commissions.userInputDataSchema,
-        jsonUISchema: commissions.userInputUISchema,
-        data: data
-      }
-      const tab = new Panel();
-      tabs.add({ caption: 'Commissions', children: tab });
-      if (commissions.customUI) {
-        const element = commissions.customUI.render({ ...data }, (result: boolean, data: any) => this.onConfirm(result, data, commissions));
-        tab.append(element);
-      } else {
-        renderUI(tab, opt, (result: boolean, data: any) => this.onConfirm(result, data, commissions));
-      }
-    }
-    if (theme) {
-      const opt = {
-        ...defaultOptions,
-        jsonSchema: theme.userInputDataSchema,
-        jsonUISchema: theme.userInputUISchema,
-        data: tag
-      }
-      const tab = new Panel();
-      tabs.add({ caption: 'Theme', children: tab });
-      if (theme.customUI) {
-        const element = theme.customUI.render({ ...data }, (result: boolean, data: any) => this.onConfirm(result, data, theme));
-        tab.append(element);
-      } else {
-        renderUI(tab, opt, (result: boolean, data: any) => this.onConfirm(result, data, theme));
-      }
-    }
-    if (advanced) {
-      const tab = new Panel();
-      const customUI = advanced.customUI;
-      const element = customUI.render({ ...data, ...tag }, (result: boolean, data: any) => this.onConfirm(result, data, advanced));
-      tab.append(element);
-      tabs.add({ caption: 'Advanced', children: tab });
-    }
+    this.renderTab(tabs, general, data, defaultOptions, 'General');
+    this.renderTab(tabs, commissions, data, defaultOptions, 'Commissions');
+    this.renderTab(tabs, theme, tag, defaultOptions, 'Theme');
+    this.renderTab(tabs, advanced, data, defaultOptions, 'Advanced');
     tabs.activeTabIndex = 0;
   }
 
   async init() {
     super.init();
+    this.updateFormStyle();
     this.renderComponents();
   }
 
@@ -278,7 +276,7 @@ export default class ConfiguratorSettings extends Module {
           width={300}
           maxWidth="100%"
           height={32}
-          border={{ radius: 5, style: 'solid', width: 1, color: Theme.divider }}
+          border={{ radius: 5, style: 'solid', width: 1, color: Theme.text.primary }}
           placeholder="Search components"
           onChanged={this.onSearch}
         />
@@ -299,20 +297,19 @@ export default class ConfiguratorSettings extends Module {
         />
         <i-modal
           id="mdSettings"
-          width={750}
+          width={1200}
         >
           <i-hstack gap={20} horizontalAlignment="end">
             <i-icon width={20} height={20} class="pointer icon-close" name="times" fill={Theme.colors.primary.main} onClick={this.closeDetail} />
           </i-hstack>
-          <i-vstack gap={20} padding={{ top: 20, bottom: 20, left: 20, right: 20 }} verticalAlignment="center" horizontalAlignment="center">
-            <i-panel id="pnlPreview" width="100%" />
-            <i-panel height={2} width="100%" background={{ color: Theme.divider }} />
-            <i-vstack gap={10} width="100%">
+          <i-hstack gap={20} padding={{ top: 20, bottom: 20, left: 20, right: 20 }} horizontalAlignment="center" wrap="wrap">
+            <i-panel id="pnlPreview" width="calc(55% - 10px)" minWidth={400} />
+            <i-vstack gap={10} width="calc(45% - 10px)" minWidth={400}>
               <i-label caption="Settings" font={{ size: '16px', bold: true }} />
               <i-panel id="pnlTabs" width="100%" />
               <i-button id="btnSave" caption="Save" width={200} margin={{ left: 'auto', right: 'auto' }} padding={{ top: 8, bottom: 8 }} font={{ color: Theme.colors.primary.contrastText }} onClick={this.onSave} />
             </i-vstack>
-          </i-vstack>
+          </i-hstack>
         </i-modal>
       </i-vstack>
     )
