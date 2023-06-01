@@ -26,6 +26,45 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
             },
             '.icon-close svg': {
                 fill: Theme.colors.primary.main
+            },
+            '.is-direction': {
+                $nest: {
+                    'i-tab .tab-item > i-icon svg': {
+                        fill: `${Theme.colors.primary.contrastText} !important`,
+                    },
+                    'i-input': {
+                        border: `1px solid ${Theme.input.fontColor}`
+                    }
+                }
+            },
+            'i-tab .tab-item > i-icon svg': {
+                opacity: 0.55
+            },
+            'i-tab:not(.disabled).active .tab-item > i-icon svg': {
+                opacity: 1
+            },
+            'i-tab:not(.disabled):hover .tab-item > i-icon svg': {
+                opacity: 1
+            },
+            '#pnlPreview i-input': {
+                marginBottom: '0 !important'
+            },
+            '.custom-settings--ui': {
+                $nest: {
+                    '& > i-panel > i-vstack > i-panel': {
+                        width: '100%'
+                    },
+                    '.form-control > i-panel': {
+                        $nest: {
+                            '& > i-panel > i-hstack > i-label': {
+                                fontSize: '1.25rem !important'
+                            },
+                            '& > i-hstack > i-hstack > i-label': {
+                                fontSize: '1.25rem !important'
+                            }
+                        }
+                    }
+                }
             }
         }
     });
@@ -89,10 +128,21 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
             super(parent, options);
             this.currentId = 0;
             this._data = [];
+            this._direction = false;
             this.totalPage = 0;
             this.pageNumber = 0;
             this.itemStart = 0;
             this.itemEnd = pageSize;
+            this.updateFormStyle = () => {
+                if (!this.pnlTabs)
+                    return;
+                if (this.direction) {
+                    this.pnlTabs.classList.add('is-direction');
+                }
+                else {
+                    this.pnlTabs.classList.remove('is-direction');
+                }
+            };
             this.onSelectIndex = () => {
                 const pageNumber = this.paginationElm.currentPage;
                 this.pageNumber = pageNumber;
@@ -123,7 +173,7 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                         width: 'calc(33.33% - 7px)',
                         minWidth: 200,
                         minHeight: 100,
-                        border: { radius: 8, width: 1, style: 'solid', color: Theme.divider },
+                        border: { radius: 8, width: 1, style: 'solid', color: Theme.text.primary },
                         padding: { top: 10, bottom: 10, left: 10, right: 10 }
                     });
                     pnl.classList.add('pointer');
@@ -155,7 +205,11 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
             this.showDetail = async (item) => {
                 this.currentId = item.id;
                 this.item = item;
-                const containerModule = await index_1.getComponent(item.name);
+                let name = item.name;
+                if (!name) {
+                    name = this.data.find(f => f.id == this.currentId).name;
+                }
+                const containerModule = await index_1.getComponent(name);
                 this.pnlPreview.clearInnerHTML();
                 this.pnlPreview.appendChild(this.$render("i-label", { caption: "Preview", font: { size: '16px', bold: true }, margin: { bottom: 10 } }));
                 this.pnlPreview.appendChild(containerModule);
@@ -182,7 +236,7 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 const tag = ((_b = this.builderTarget) === null || _b === void 0 ? void 0 : _b.getTag) ? await this.builderTarget.getTag() : this.item.tag;
                 this.mdSettings.visible = false;
                 if (this.onSaveConfigData)
-                    this.onSaveConfigData(Object.assign({ componentId: this.currentId }, data), tag);
+                    this.onSaveConfigData(Object.assign({ componentId: Number(this.currentId) }, data), tag);
             };
             this.onConfirm = (result, data, action) => {
                 if (result) {
@@ -193,15 +247,30 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                     console.log(data.errors);
                 }
             };
+            this.renderTab = (tabs, target, data, defaultOptions, title) => {
+                if (target) {
+                    const opt = Object.assign(Object.assign({}, defaultOptions), { jsonSchema: target.userInputDataSchema, jsonUISchema: target.userInputUISchema, data: data });
+                    const tab = new components_3.Panel();
+                    tab.classList.add('custom-settings--ui');
+                    tabs.add({ caption: title, icon: target.icon ? { name: target.icon, fill: Theme.colors.primary.contrastText } : undefined, children: tab });
+                    if (target.customUI) {
+                        const element = target.customUI.render(Object.assign({}, data), (result, data) => this.onConfirm(result, data, target));
+                        tab.append(element);
+                    }
+                    else {
+                        components_3.renderUI(tab, opt, (result, data) => this.onConfirm(result, data, target));
+                    }
+                }
+            };
             this.renderSettings = async (builderTarget, item) => {
                 this.builderTarget = builderTarget;
                 const data = (builderTarget === null || builderTarget === void 0 ? void 0 : builderTarget.getData) ? await builderTarget.getData() : item.properties;
                 const tag = (builderTarget === null || builderTarget === void 0 ? void 0 : builderTarget.getTag) ? await builderTarget.getTag() : item.tag;
                 const actions = (builderTarget === null || builderTarget === void 0 ? void 0 : builderTarget.getActions()) || [];
-                const general = actions.find((v) => ['Settings', 'General'].includes(v.name) && !v.customUI);
-                const commissions = actions.find((v) => v.name === 'Commissions');
+                const general = actions.find((v) => ['Settings', 'General'].includes(v.name));
+                const commissions = actions.find((v) => ['Commissions'].includes(v.name));
                 const theme = actions.find((v) => ['Theme Settings', 'Theme'].includes(v.name));
-                const advanced = actions.find((v) => ['Settings', 'General'].includes(v.name) && v.customUI);
+                const advanced = actions.find((v) => ['Advanced'].includes(v.name));
                 const tabs = await components_3.Tabs.create();
                 this.pnlTabs.clearInnerHTML();
                 this.pnlTabs.appendChild(tabs);
@@ -214,43 +283,10 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                     jsonSchema: {},
                     data
                 };
-                if (general) {
-                    const opt = Object.assign(Object.assign({}, defaultOptions), { jsonSchema: general.userInputDataSchema, jsonUISchema: general.userInputUISchema, data: data });
-                    const tab = new components_3.Panel();
-                    tabs.add({ caption: 'General', children: tab });
-                    components_3.renderUI(tab, opt, (result, data) => this.onConfirm(result, data, general));
-                }
-                if (commissions) {
-                    const opt = Object.assign(Object.assign({}, defaultOptions), { jsonSchema: commissions.userInputDataSchema, jsonUISchema: commissions.userInputUISchema, data: data });
-                    const tab = new components_3.Panel();
-                    tabs.add({ caption: 'Commissions', children: tab });
-                    if (commissions.customUI) {
-                        const element = commissions.customUI.render(Object.assign({}, data), (result, data) => this.onConfirm(result, data, commissions));
-                        tab.append(element);
-                    }
-                    else {
-                        components_3.renderUI(tab, opt, (result, data) => this.onConfirm(result, data, commissions));
-                    }
-                }
-                if (theme) {
-                    const opt = Object.assign(Object.assign({}, defaultOptions), { jsonSchema: theme.userInputDataSchema, jsonUISchema: theme.userInputUISchema, data: tag });
-                    const tab = new components_3.Panel();
-                    tabs.add({ caption: 'Theme', children: tab });
-                    if (theme.customUI) {
-                        const element = theme.customUI.render(Object.assign({}, data), (result, data) => this.onConfirm(result, data, theme));
-                        tab.append(element);
-                    }
-                    else {
-                        components_3.renderUI(tab, opt, (result, data) => this.onConfirm(result, data, theme));
-                    }
-                }
-                if (advanced) {
-                    const tab = new components_3.Panel();
-                    const customUI = advanced.customUI;
-                    const element = customUI.render(Object.assign(Object.assign({}, data), tag), (result, data) => this.onConfirm(result, data, advanced));
-                    tab.append(element);
-                    tabs.add({ caption: 'Advanced', children: tab });
-                }
+                this.renderTab(tabs, general, data, defaultOptions, 'General');
+                this.renderTab(tabs, commissions, data, defaultOptions, 'Commissions');
+                this.renderTab(tabs, theme, tag, defaultOptions, 'Theme');
+                this.renderTab(tabs, advanced, data, defaultOptions, 'Advanced');
                 tabs.activeTabIndex = 0;
             };
         }
@@ -260,6 +296,13 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
         }
         get data() {
             return this._data || [];
+        }
+        set direction(value) {
+            this._direction = value;
+            this.updateFormStyle();
+        }
+        get direction() {
+            return this._direction;
         }
         static async create(options, parent) {
             let self = new this(parent, options);
@@ -277,20 +320,20 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
         }
         async init() {
             super.init();
+            this.updateFormStyle();
             this.renderComponents();
         }
         render() {
             return (this.$render("i-vstack", { gap: 8, padding: { top: '1rem', bottom: '1rem' }, class: index_css_1.configStyle },
-                this.$render("i-input", { id: "inputSearch", width: 300, maxWidth: "100%", height: 32, border: { radius: 5, style: 'solid', width: 1, color: Theme.divider }, placeholder: "Search components", onChanged: this.onSearch }),
+                this.$render("i-input", { id: "inputSearch", width: 300, maxWidth: "100%", height: 32, border: { radius: 5, style: 'solid', width: 1, color: Theme.text.primary }, placeholder: "Search components", onChanged: this.onSearch }),
                 this.$render("i-hstack", { id: "hStackComponents", minHeight: 120, gap: 10, wrap: "wrap", horizontalAlignment: "center" }),
                 this.$render("i-pagination", { id: "paginationElm", margin: { top: 16, bottom: 16, left: 'auto', right: 'auto' }, width: "auto", currentPage: this.pageNumber, totalPages: this.totalPage, onPageChanged: this.onSelectIndex }),
-                this.$render("i-modal", { id: "mdSettings", width: 750 },
+                this.$render("i-modal", { id: "mdSettings", width: 1200 },
                     this.$render("i-hstack", { gap: 20, horizontalAlignment: "end" },
                         this.$render("i-icon", { width: 20, height: 20, class: "pointer icon-close", name: "times", fill: Theme.colors.primary.main, onClick: this.closeDetail })),
-                    this.$render("i-vstack", { gap: 20, padding: { top: 20, bottom: 20, left: 20, right: 20 }, verticalAlignment: "center", horizontalAlignment: "center" },
-                        this.$render("i-panel", { id: "pnlPreview", width: "100%" }),
-                        this.$render("i-panel", { height: 2, width: "100%", background: { color: Theme.divider } }),
-                        this.$render("i-vstack", { gap: 10, width: "100%" },
+                    this.$render("i-hstack", { gap: 20, padding: { top: 20, bottom: 20, left: 20, right: 20 }, horizontalAlignment: "center", wrap: "wrap" },
+                        this.$render("i-panel", { id: "pnlPreview", width: "calc(55% - 10px)", minWidth: 400 }),
+                        this.$render("i-vstack", { gap: 10, width: "calc(45% - 10px)", minWidth: 400 },
                             this.$render("i-label", { caption: "Settings", font: { size: '16px', bold: true } }),
                             this.$render("i-panel", { id: "pnlTabs", width: "100%" }),
                             this.$render("i-button", { id: "btnSave", caption: "Save", width: 200, margin: { left: 'auto', right: 'auto' }, padding: { top: 8, bottom: 8 }, font: { color: Theme.colors.primary.contrastText }, onClick: this.onSave }))))));
