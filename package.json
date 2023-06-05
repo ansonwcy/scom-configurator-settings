@@ -9,20 +9,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "copy": "sh ./scripts/copy.sh",
-    "build": "rm -rf dist && npx @ijstech/compiler && npm run copy",
+    "build": "rm -rf dist && npx @ijstech/compiler",
     "test": "cd test && npm run test && cd .."
-  },
-  "dependencies": {
-    "@scom/scom-dapp-container": "^0.1.4",
-    "@scom/scom-table": "https://github.com/scom-repos/scom-table.git",
-    "@scom/scom-counter": "https://github.com/scom-repos/scom-counter.git",
-    "@scom/scom-pie-chart": "https://github.com/scom-repos/scom-pie-chart.git",
-    "@scom/scom-bar-chart": "https://github.com/scom-repos/scom-bar-chart.git",
-    "@scom/scom-line-chart": "https://github.com/scom-repos/scom-line-chart.git",
-    "@scom/scom-area-chart": "https://github.com/scom-repos/scom-area-chart.git",
-    "@scom/scom-scatter-chart": "https://github.com/scom-repos/scom-scatter-chart.git",
-    "@scom/scom-mixed-chart": "https://github.com/scom-repos/scom-mixed-chart.git"
   },
   "devDependencies": {
     "@ijstech/cli": "^0.1.26",
