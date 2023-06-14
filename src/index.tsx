@@ -14,8 +14,7 @@ import {
   Pagination,
   observable,
   Tabs,
-  IRenderUIOptions,
-  renderUI
+  Form
 } from '@ijstech/components';
 import { configStyle } from './index.css'
 import { getComponent, commandHistory, IConfig } from './global/index';
@@ -214,10 +213,9 @@ export default class ConfiguratorSettings extends Module {
     }
   }
 
-  private renderTab = (tabs: Tabs, target: any, data: any, defaultOptions: IRenderUIOptions, title: string) => {
+  private renderTab = (tabs: Tabs, target: any, data: any, title: string) => {
     if (target) {
       const opt = {
-        ...defaultOptions,
         jsonSchema: target.userInputDataSchema,
         jsonUISchema: target.userInputUISchema,
         data: data
@@ -229,7 +227,33 @@ export default class ConfiguratorSettings extends Module {
         const element = target.customUI.render({ ...data }, (result: boolean, data: any) => this.onConfirm(result, data, target));
         tab.append(element);
       } else {
-        renderUI(tab, opt, (result: boolean, data: any) => this.onConfirm(result, data, target));
+        const self = this;
+        const form = new Form();
+        tab.append(form);
+        form.uiSchema = opt.jsonUISchema;
+        form.jsonSchema = opt.jsonSchema;
+        form.formOptions = {
+          columnWidth: '100%',
+          columnsPerRow: 1,
+          confirmButtonOptions: {
+            caption: 'Confirm',
+            backgroundColor: Theme.colors.primary.main,
+            fontColor: Theme.colors.primary.contrastText,
+            hide: false,
+            onClick: async () => {
+              const data = await form.getFormData();
+              self.onConfirm(true, data, target)
+            }
+          },
+          dateTimeFormat: {
+            date: 'YYYY-MM-DD',
+            time: 'HH:mm:ss',
+            dateTime: 'MM/DD/YYYY HH:mm'
+          }
+        };
+        form.renderForm();
+        form.clearFormData();
+        form.setFormData({ ...data });
       }
     }
   }
@@ -246,19 +270,10 @@ export default class ConfiguratorSettings extends Module {
     const tabs = await Tabs.create();
     this.pnlTabs.clearInnerHTML();
     this.pnlTabs.appendChild(tabs);
-    const defaultOptions: IRenderUIOptions = {
-      columnWidth: '100%',
-      columnsPerRow: 1,
-      confirmButtonBackgroundColor: Theme.colors.primary.main,
-      confirmButtonFontColor: Theme.colors.primary.contrastText,
-      dateTimeFormat: 'MM/DD/YYYY HH:mm',
-      jsonSchema: {},
-      data
-    }
-    this.renderTab(tabs, general, data, defaultOptions, 'General');
-    this.renderTab(tabs, commissions, data, defaultOptions, 'Commissions');
-    this.renderTab(tabs, theme, tag, defaultOptions, 'Theme');
-    this.renderTab(tabs, advanced, data, defaultOptions, 'Advanced');
+    this.renderTab(tabs, general, data, 'General');
+    this.renderTab(tabs, commissions, data, 'Commissions');
+    this.renderTab(tabs, theme, tag, 'Theme');
+    this.renderTab(tabs, advanced, data, 'Advanced');
     tabs.activeTabIndex = 0;
   }
 
@@ -297,14 +312,14 @@ export default class ConfiguratorSettings extends Module {
         />
         <i-modal
           id="mdSettings"
-          width={1200}
+          width={1300}
         >
           <i-hstack gap={20} horizontalAlignment="end">
             <i-icon width={20} height={20} class="pointer icon-close" name="times" fill={Theme.colors.primary.main} onClick={this.closeDetail} />
           </i-hstack>
           <i-hstack gap={20} padding={{ top: 20, bottom: 20, left: 20, right: 20 }} horizontalAlignment="center" wrap="wrap">
-            <i-panel id="pnlPreview" width="calc(55% - 10px)" minWidth={400} />
-            <i-vstack gap={10} width="calc(45% - 10px)" minWidth={400}>
+            <i-panel id="pnlPreview" width="calc(50% - 10px)" minWidth={400} />
+            <i-vstack gap={10} width="calc(50% - 10px)" minWidth={400}>
               <i-label caption="Settings" font={{ size: '16px', bold: true }} />
               <i-panel id="pnlTabs" width="100%" />
               <i-button id="btnSave" caption="Save" width={200} margin={{ left: 'auto', right: 'auto' }} padding={{ top: 8, bottom: 8 }} font={{ color: Theme.colors.primary.contrastText }} onClick={this.onSave} />

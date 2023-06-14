@@ -1,6 +1,10 @@
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -50,8 +54,9 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
                 marginBottom: '0 !important'
             },
             '.custom-settings--ui': {
+                marginTop: '1rem',
                 $nest: {
-                    '& > i-panel > i-vstack > i-panel': {
+                    '& > i-form > i-vstack > i-panel': {
                         width: '100%'
                     },
                     '.form-control > i-panel': {
@@ -63,6 +68,9 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
                                 fontSize: '1.25rem !important'
                             }
                         }
+                    },
+                    'i-combo-box .selection input': {
+                        paddingInline: 0
                     }
                 }
             }
@@ -124,6 +132,25 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
     const Theme = components_3.Styles.Theme.ThemeVars;
     const pageSize = 6;
     let ConfiguratorSettings = class ConfiguratorSettings extends components_3.Module {
+        set data(value) {
+            this._data = value;
+            this.resetPaging();
+        }
+        get data() {
+            return this._data || [];
+        }
+        set direction(value) {
+            this._direction = value;
+            this.updateFormStyle();
+        }
+        get direction() {
+            return this._direction;
+        }
+        static async create(options, parent) {
+            let self = new this(parent, options);
+            await self.ready();
+            return self;
+        }
         constructor(parent, options) {
             super(parent, options);
             this.currentId = 0;
@@ -209,7 +236,7 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 if (!name) {
                     name = this.data.find(f => f.id == this.currentId).name;
                 }
-                const containerModule = await index_1.getComponent(name);
+                const containerModule = await (0, index_1.getComponent)(name);
                 this.pnlPreview.clearInnerHTML();
                 this.pnlPreview.appendChild(this.$render("i-label", { caption: "Preview", font: { size: '16px', bold: true }, margin: { bottom: 10 } }));
                 this.pnlPreview.appendChild(containerModule);
@@ -247,9 +274,13 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                     console.log(data.errors);
                 }
             };
-            this.renderTab = (tabs, target, data, defaultOptions, title) => {
+            this.renderTab = (tabs, target, data, title) => {
                 if (target) {
-                    const opt = Object.assign(Object.assign({}, defaultOptions), { jsonSchema: target.userInputDataSchema, jsonUISchema: target.userInputUISchema, data: data });
+                    const opt = {
+                        jsonSchema: target.userInputDataSchema,
+                        jsonUISchema: target.userInputUISchema,
+                        data: data
+                    };
                     const tab = new components_3.Panel();
                     tab.classList.add('custom-settings--ui');
                     tabs.add({ caption: title, icon: target.icon ? { name: target.icon, fill: Theme.colors.primary.contrastText } : undefined, children: tab });
@@ -258,7 +289,33 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                         tab.append(element);
                     }
                     else {
-                        components_3.renderUI(tab, opt, (result, data) => this.onConfirm(result, data, target));
+                        const self = this;
+                        const form = new components_3.Form();
+                        tab.append(form);
+                        form.uiSchema = opt.jsonUISchema;
+                        form.jsonSchema = opt.jsonSchema;
+                        form.formOptions = {
+                            columnWidth: '100%',
+                            columnsPerRow: 1,
+                            confirmButtonOptions: {
+                                caption: 'Confirm',
+                                backgroundColor: Theme.colors.primary.main,
+                                fontColor: Theme.colors.primary.contrastText,
+                                hide: false,
+                                onClick: async () => {
+                                    const data = await form.getFormData();
+                                    self.onConfirm(true, data, target);
+                                }
+                            },
+                            dateTimeFormat: {
+                                date: 'YYYY-MM-DD',
+                                time: 'HH:mm:ss',
+                                dateTime: 'MM/DD/YYYY HH:mm'
+                            }
+                        };
+                        form.renderForm();
+                        form.clearFormData();
+                        form.setFormData(Object.assign({}, data));
                     }
                 }
             };
@@ -274,40 +331,12 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 const tabs = await components_3.Tabs.create();
                 this.pnlTabs.clearInnerHTML();
                 this.pnlTabs.appendChild(tabs);
-                const defaultOptions = {
-                    columnWidth: '100%',
-                    columnsPerRow: 1,
-                    confirmButtonBackgroundColor: Theme.colors.primary.main,
-                    confirmButtonFontColor: Theme.colors.primary.contrastText,
-                    dateTimeFormat: 'MM/DD/YYYY HH:mm',
-                    jsonSchema: {},
-                    data
-                };
-                this.renderTab(tabs, general, data, defaultOptions, 'General');
-                this.renderTab(tabs, commissions, data, defaultOptions, 'Commissions');
-                this.renderTab(tabs, theme, tag, defaultOptions, 'Theme');
-                this.renderTab(tabs, advanced, data, defaultOptions, 'Advanced');
+                this.renderTab(tabs, general, data, 'General');
+                this.renderTab(tabs, commissions, data, 'Commissions');
+                this.renderTab(tabs, theme, tag, 'Theme');
+                this.renderTab(tabs, advanced, data, 'Advanced');
                 tabs.activeTabIndex = 0;
             };
-        }
-        set data(value) {
-            this._data = value;
-            this.resetPaging();
-        }
-        get data() {
-            return this._data || [];
-        }
-        set direction(value) {
-            this._direction = value;
-            this.updateFormStyle();
-        }
-        get direction() {
-            return this._direction;
-        }
-        static async create(options, parent) {
-            let self = new this(parent, options);
-            await self.ready();
-            return self;
         }
         get componentsData() {
             const searchVal = (this.inputSearch.value || '').toLowerCase();
@@ -328,23 +357,23 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 this.$render("i-input", { id: "inputSearch", width: 300, maxWidth: "100%", height: 32, border: { radius: 5, style: 'solid', width: 1, color: Theme.text.primary }, placeholder: "Search components", onChanged: this.onSearch }),
                 this.$render("i-hstack", { id: "hStackComponents", minHeight: 120, gap: 10, wrap: "wrap", horizontalAlignment: "center" }),
                 this.$render("i-pagination", { id: "paginationElm", margin: { top: 16, bottom: 16, left: 'auto', right: 'auto' }, width: "auto", currentPage: this.pageNumber, totalPages: this.totalPage, onPageChanged: this.onSelectIndex }),
-                this.$render("i-modal", { id: "mdSettings", width: 1200 },
+                this.$render("i-modal", { id: "mdSettings", width: 1300 },
                     this.$render("i-hstack", { gap: 20, horizontalAlignment: "end" },
                         this.$render("i-icon", { width: 20, height: 20, class: "pointer icon-close", name: "times", fill: Theme.colors.primary.main, onClick: this.closeDetail })),
                     this.$render("i-hstack", { gap: 20, padding: { top: 20, bottom: 20, left: 20, right: 20 }, horizontalAlignment: "center", wrap: "wrap" },
-                        this.$render("i-panel", { id: "pnlPreview", width: "calc(55% - 10px)", minWidth: 400 }),
-                        this.$render("i-vstack", { gap: 10, width: "calc(45% - 10px)", minWidth: 400 },
+                        this.$render("i-panel", { id: "pnlPreview", width: "calc(50% - 10px)", minWidth: 400 }),
+                        this.$render("i-vstack", { gap: 10, width: "calc(50% - 10px)", minWidth: 400 },
                             this.$render("i-label", { caption: "Settings", font: { size: '16px', bold: true } }),
                             this.$render("i-panel", { id: "pnlTabs", width: "100%" }),
                             this.$render("i-button", { id: "btnSave", caption: "Save", width: 200, margin: { left: 'auto', right: 'auto' }, padding: { top: 8, bottom: 8 }, font: { color: Theme.colors.primary.contrastText }, onClick: this.onSave }))))));
         }
     };
     __decorate([
-        components_3.observable()
+        (0, components_3.observable)()
     ], ConfiguratorSettings.prototype, "totalPage", void 0);
     ConfiguratorSettings = __decorate([
         components_3.customModule,
-        components_3.customElements('i-scom-configurator-settings')
+        (0, components_3.customElements)('i-scom-configurator-settings')
     ], ConfiguratorSettings);
     exports.default = ConfiguratorSettings;
 });
