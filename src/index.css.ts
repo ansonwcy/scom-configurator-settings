@@ -32,8 +32,9 @@ export const configStyle = Styles.style({
       marginBottom: '0 !important'
     },
     '.custom-settings--ui': {
+      marginTop: '1rem',
       $nest: {
-        '& > i-panel > i-vstack > i-panel': {
+        '& > i-form > i-vstack > i-panel': {
           width: '100%'
         },
         '.form-control > i-panel': {
@@ -45,6 +46,9 @@ export const configStyle = Styles.style({
               fontSize: '1.25rem !important'
             }
           }
+        },
+        'i-combo-box .selection input': {
+          paddingInline: 0
         }
       }
     }
