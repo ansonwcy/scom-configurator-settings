@@ -17,7 +17,7 @@ import {
   Form
 } from '@ijstech/components';
 import { configStyle } from './index.css'
-import { getComponent, commandHistory, IConfig } from './global/index';
+import { getComponent, commandHistory, IConfig, ISaveConfigData } from './global/index';
 
 const Theme = Styles.Theme.ThemeVars;
 
@@ -46,7 +46,9 @@ export default class ConfiguratorSettings extends Module {
   private pnlTabs: Panel;
   private builderTarget: any;
   private item: any;
+  private currentPath: string;
   private currentId = 0;
+  private _parentTags: any;
   private _data = [];
   private _direction = false;
 
@@ -56,7 +58,7 @@ export default class ConfiguratorSettings extends Module {
   private itemStart = 0;
   private itemEnd = pageSize;
 
-  public onSaveConfigData: any;
+  public onSaveConfigData: ((data: ISaveConfigData) => void) | null = null;
 
   set data(value: IConfig[]) {
     this._data = value;
@@ -74,6 +76,14 @@ export default class ConfiguratorSettings extends Module {
 
   get direction() {
     return this._direction;
+  }
+
+  get parentTags() {
+    return this._parentTags;
+  }
+
+  set parentTags(value: any) {
+    this._parentTags = value;
   }
 
   static async create(options?: ScomConfiguratorElement, parent?: Container) {
@@ -172,11 +182,12 @@ export default class ConfiguratorSettings extends Module {
   showDetail = async (item: any) => {
     this.currentId = item.id;
     this.item = item;
-    let name = item.name;
-    if (!name) {
-      name = this.data.find(f => f.id == this.currentId).name;
+    let path = item.path;
+    if (!path) {
+      path = this.data.find(f => f.id == this.currentId).path;
     }
-    const containerModule: any = await getComponent(name);
+    this.currentPath = path;
+    const containerModule: any = await getComponent(path);
     this.pnlPreview.clearInnerHTML();
     this.pnlPreview.appendChild(<i-label caption="Preview" font={{ size: '16px', bold: true }} margin={{ bottom: 10 }} />);
     this.pnlPreview.appendChild(containerModule);
@@ -186,8 +197,8 @@ export default class ConfiguratorSettings extends Module {
       if (configurator?.setData) {
         await configurator.setData(item.properties);
       }
-      if (configurator?.setTag && item.tag) {
-        await configurator.setTag(item.tag);
+      if (configurator?.setTag && (item.tag || this.parentTags)) {
+        await configurator.setTag({ ...this.parentTags, ...item.tag });
       }
       this.renderSettings(configurator, item);
     } else {
@@ -200,8 +211,14 @@ export default class ConfiguratorSettings extends Module {
   private onSave = async () => {
     const data = this.builderTarget?.getData ? await this.builderTarget.getData() : this.item.properties;
     const tag = this.builderTarget?.getTag ? await this.builderTarget.getTag() : this.item.tag;
-    this.mdSettings.visible = false;
-    if (this.onSaveConfigData) this.onSaveConfigData({ componentId: Number(this.currentId), ...data }, tag);
+    if (this.direction) this.mdSettings.visible = false;
+    if (this.onSaveConfigData) {
+      this.onSaveConfigData({
+        path: this.currentPath,
+        properties: { componentId: Number(this.currentId), ...data },
+        tag
+      });
+    };
   }
 
   private onConfirm = (result: boolean, data: any, action: any) => {
