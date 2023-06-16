@@ -23,19 +23,24 @@ declare module "@scom/scom-configurator-settings/global/utils.ts" {
 declare module "@scom/scom-configurator-settings/global/index.ts" {
     export interface IConfig {
         id: number;
-        name: string;
+        path: string;
         title: string;
         description?: string;
         properties: {
             [key: string]: any;
         };
     }
+    export interface ISaveConfigData {
+        path: string;
+        properties: any;
+        tag: any;
+    }
     export * from "@scom/scom-configurator-settings/global/utils.ts";
 }
 /// <amd-module name="@scom/scom-configurator-settings" />
 declare module "@scom/scom-configurator-settings" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    import { IConfig } from "@scom/scom-configurator-settings/global/index.ts";
+    import { IConfig, ISaveConfigData } from "@scom/scom-configurator-settings/global/index.ts";
     interface ScomConfiguratorElement extends ControlElement {
     }
     global {
@@ -54,18 +59,22 @@ declare module "@scom/scom-configurator-settings" {
         private pnlTabs;
         private builderTarget;
         private item;
+        private currentPath;
         private currentId;
+        private _parentTags;
         private _data;
         private _direction;
         private totalPage;
         private pageNumber;
         private itemStart;
         private itemEnd;
-        onSaveConfigData: any;
+        onSaveConfigData: ((data: ISaveConfigData) => void) | null;
         set data(value: IConfig[]);
         get data(): IConfig[];
         set direction(value: boolean);
         get direction(): boolean;
+        get parentTags(): any;
+        set parentTags(value: any);
         static create(options?: ScomConfiguratorElement, parent?: Container): Promise<ConfiguratorSettings>;
         constructor(parent?: Container, options?: ScomConfiguratorElement);
         private get componentsData();

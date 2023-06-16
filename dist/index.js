@@ -146,6 +146,12 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
         get direction() {
             return this._direction;
         }
+        get parentTags() {
+            return this._parentTags;
+        }
+        set parentTags(value) {
+            this._parentTags = value;
+        }
         static async create(options, parent) {
             let self = new this(parent, options);
             await self.ready();
@@ -160,6 +166,7 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
             this.pageNumber = 0;
             this.itemStart = 0;
             this.itemEnd = pageSize;
+            this.onSaveConfigData = null;
             this.updateFormStyle = () => {
                 if (!this.pnlTabs)
                     return;
@@ -232,11 +239,12 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
             this.showDetail = async (item) => {
                 this.currentId = item.id;
                 this.item = item;
-                let name = item.name;
-                if (!name) {
-                    name = this.data.find(f => f.id == this.currentId).name;
+                let path = item.path;
+                if (!path) {
+                    path = this.data.find(f => f.id == this.currentId).path;
                 }
-                const containerModule = await (0, index_1.getComponent)(name);
+                this.currentPath = path;
+                const containerModule = await (0, index_1.getComponent)(path);
                 this.pnlPreview.clearInnerHTML();
                 this.pnlPreview.appendChild(this.$render("i-label", { caption: "Preview", font: { size: '16px', bold: true }, margin: { bottom: 10 } }));
                 this.pnlPreview.appendChild(containerModule);
@@ -246,8 +254,8 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                     if (configurator === null || configurator === void 0 ? void 0 : configurator.setData) {
                         await configurator.setData(item.properties);
                     }
-                    if ((configurator === null || configurator === void 0 ? void 0 : configurator.setTag) && item.tag) {
-                        await configurator.setTag(item.tag);
+                    if ((configurator === null || configurator === void 0 ? void 0 : configurator.setTag) && (item.tag || this.parentTags)) {
+                        await configurator.setTag(Object.assign(Object.assign({}, this.parentTags), item.tag));
                     }
                     this.renderSettings(configurator, item);
                 }
@@ -261,9 +269,16 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 var _a, _b;
                 const data = ((_a = this.builderTarget) === null || _a === void 0 ? void 0 : _a.getData) ? await this.builderTarget.getData() : this.item.properties;
                 const tag = ((_b = this.builderTarget) === null || _b === void 0 ? void 0 : _b.getTag) ? await this.builderTarget.getTag() : this.item.tag;
-                this.mdSettings.visible = false;
-                if (this.onSaveConfigData)
-                    this.onSaveConfigData(Object.assign({ componentId: Number(this.currentId) }, data), tag);
+                if (this.direction)
+                    this.mdSettings.visible = false;
+                if (this.onSaveConfigData) {
+                    this.onSaveConfigData({
+                        path: this.currentPath,
+                        properties: Object.assign({ componentId: Number(this.currentId) }, data),
+                        tag
+                    });
+                }
+                ;
             };
             this.onConfirm = (result, data, action) => {
                 if (result) {
