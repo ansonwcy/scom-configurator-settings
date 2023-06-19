@@ -53,11 +53,31 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
             '#pnlPreview i-input': {
                 marginBottom: '0 !important'
             },
+            '#pnlPreview :nth-child(2)': {
+                marginInline: 'auto '
+            },
             '.custom-settings--ui': {
                 marginTop: '1rem',
                 $nest: {
-                    '& > i-form > i-vstack > i-panel': {
-                        width: '100%'
+                    '& > i-form': {
+                        display: 'block',
+                        height: '100%',
+                        $nest: {
+                            '& > i-vstack': {
+                                overflow: 'auto',
+                                minHeight: '300px',
+                                maxHeight: 'calc(70vh - 231px)',
+                                justifyContent: 'start'
+                            },
+                            '& > i-panel': {
+                                width: '100%',
+                                overflow: 'auto',
+                                maxHeight: 'calc(70vh - 231px)'
+                            },
+                            '& > i-vstack > i-panel': {
+                                width: '100%'
+                            }
+                        }
                     },
                     '.form-control > i-panel': {
                         $nest: {
@@ -71,6 +91,41 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
                     },
                     'i-combo-box .selection input': {
                         paddingInline: 0
+                    }
+                }
+            },
+            '::-webkit-scrollbar': {
+                width: '7px',
+            },
+            '::-webkit-scrollbar-track': {
+                borderRadius: '10px',
+                border: '1px solid transparent',
+                background: `${Theme.action.focus} !important`
+            },
+            '::-webkit-scrollbar-thumb': {
+                background: `${Theme.divider} !important`,
+                borderRadius: '10px',
+                outline: '1px solid transparent'
+            },
+            '@media screen and (max-width: 992px)': {
+                $nest: {
+                    '.custom-settings--ui': {
+                        $nest: {
+                            '& > i-form > i-vstack > i-panel': {
+                                maxHeight: 'auto',
+                                overflow: 'auto'
+                            }
+                        }
+                    },
+                    '#pnlPreview': {
+                        width: '100% !important'
+                    },
+                    '.custom--divider + i-vstack': {
+                        width: '100% !important'
+                    },
+                    '.custom--divider': {
+                        width: '100% !important',
+                        height: '2px !important'
                     }
                 }
             }
@@ -375,9 +430,10 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 this.$render("i-modal", { id: "mdSettings", width: 1300 },
                     this.$render("i-hstack", { gap: 20, horizontalAlignment: "end" },
                         this.$render("i-icon", { width: 20, height: 20, class: "pointer icon-close", name: "times", fill: Theme.colors.primary.main, onClick: this.closeDetail })),
-                    this.$render("i-hstack", { gap: 20, padding: { top: 20, bottom: 20, left: 20, right: 20 }, horizontalAlignment: "center", wrap: "wrap" },
-                        this.$render("i-panel", { id: "pnlPreview", width: "calc(50% - 10px)", minWidth: 400 }),
-                        this.$render("i-vstack", { gap: 10, width: "calc(50% - 10px)", minWidth: 400 },
+                    this.$render("i-hstack", { gap: 20, padding: { top: 20, bottom: 20, left: 20, right: 20 }, minHeight: "70vh", horizontalAlignment: "center", wrap: "wrap" },
+                        this.$render("i-panel", { id: "pnlPreview", width: "calc(50% - 21px)", minWidth: 400 }),
+                        this.$render("i-panel", { display: "flex", width: 2, background: { color: Theme.divider }, class: "custom--divider" }),
+                        this.$render("i-vstack", { gap: 10, width: "calc(50% - 21px)", minWidth: 400 },
                             this.$render("i-label", { caption: "Settings", font: { size: '16px', bold: true } }),
                             this.$render("i-panel", { id: "pnlTabs", width: "100%" }),
                             this.$render("i-button", { id: "btnSave", caption: "Save", width: 200, margin: { left: 'auto', right: 'auto' }, padding: { top: 8, bottom: 8 }, font: { color: Theme.colors.primary.contrastText }, onClick: this.onSave }))))));
