@@ -334,9 +334,10 @@ export default class ConfiguratorSettings extends Module {
           <i-hstack gap={20} horizontalAlignment="end">
             <i-icon width={20} height={20} class="pointer icon-close" name="times" fill={Theme.colors.primary.main} onClick={this.closeDetail} />
           </i-hstack>
-          <i-hstack gap={20} padding={{ top: 20, bottom: 20, left: 20, right: 20 }} horizontalAlignment="center" wrap="wrap">
-            <i-panel id="pnlPreview" width="calc(50% - 10px)" minWidth={400} />
-            <i-vstack gap={10} width="calc(50% - 10px)" minWidth={400}>
+          <i-hstack gap={20} padding={{ top: 20, bottom: 20, left: 20, right: 20 }} minHeight="70vh" horizontalAlignment="center" wrap="wrap">
+            <i-panel id="pnlPreview" width="calc(50% - 21px)" minWidth={400} />
+            <i-panel display="flex" width={2} background={{ color: Theme.divider }} class="custom--divider" />
+            <i-vstack gap={10} width="calc(50% - 21px)" minWidth={400}>
               <i-label caption="Settings" font={{ size: '16px', bold: true }} />
               <i-panel id="pnlTabs" width="100%" />
               <i-button id="btnSave" caption="Save" width={200} margin={{ left: 'auto', right: 'auto' }} padding={{ top: 8, bottom: 8 }} font={{ color: Theme.colors.primary.contrastText }} onClick={this.onSave} />
