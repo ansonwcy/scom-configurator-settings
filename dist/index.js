@@ -86,6 +86,12 @@ define("@scom/scom-configurator-settings/index.css.ts", ["require", "exports", "
                             },
                             '& > i-hstack > i-hstack > i-label': {
                                 fontSize: '1.25rem !important'
+                            },
+                            'i-color .i-color': {
+                                width: '100%'
+                            },
+                            'i-color .input-span': {
+                                width: '100%'
                             }
                         }
                     },
