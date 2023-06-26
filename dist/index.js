@@ -173,11 +173,12 @@ define("@scom/scom-configurator-settings/global/utils.ts", ["require", "exports"
     exports.CommandHistory = CommandHistory;
     exports.commandHistory = new CommandHistory();
     const getComponent = async (path) => {
-        components_2.application.currentModuleDir = path;
-        await components_2.application.loadScript(`${path}/index.js`);
-        components_2.application.currentModuleDir = '';
-        const elementName = `i-${path.split('/').pop()}`;
-        const element = document.createElement(elementName);
+        const element = await components_2.application.createElement(path);
+        // application.currentModuleDir = path;
+        // await application.loadScript(`${path}/index.js`);
+        // application.currentModuleDir = '';
+        // const elementName = `i-${path.split('/').pop()}`;
+        // const element = document.createElement(elementName);
         return element;
     };
     exports.getComponent = getComponent;
