@@ -14,7 +14,8 @@ import {
   Pagination,
   observable,
   Tabs,
-  Form
+  Form,
+  Button
 } from '@ijstech/components';
 import { configStyle } from './index.css'
 import { getComponent, commandHistory, IConfig, ISaveConfigData } from './global/index';
@@ -45,12 +46,14 @@ export default class ConfiguratorSettings extends Module {
   private pnlPreview: Panel;
   private pnlTabs: Panel;
   private builderTarget: any;
+  private btnSave: Button;
   private item: any;
   private currentPath: string;
   private currentId = 0;
   private _parentTags: any;
   private _data = [];
   private _direction = false;
+  private _showSaveBtn = true;
 
   @observable()
   private totalPage = 0;
@@ -86,6 +89,15 @@ export default class ConfiguratorSettings extends Module {
     this._parentTags = value;
   }
 
+  // set showSaveBtn(value: boolean) {
+  //   this._showSaveBtn = value;
+  //   this.updateSaveBtn(value);
+  // }
+
+  // get showSaveBtn() {
+  //   return this._showSaveBtn;
+  // }
+
   static async create(options?: ScomConfiguratorElement, parent?: Container) {
     let self = new this(parent, options);
     await self.ready();
@@ -95,6 +107,14 @@ export default class ConfiguratorSettings extends Module {
   constructor(parent?: Container, options?: ScomConfiguratorElement) {
     super(parent, options);
   }
+
+  // private updateSaveBtn(show: boolean) {
+  //   if (show) {
+  //     this.btnSave.visible = true;
+  //   } else {
+  //     this.btnSave.visible = false;
+  //   }
+  // }
 
   private get componentsData() {
     const searchVal = (this.inputSearch.value || '').toLowerCase();
