@@ -1,0 +1,12 @@
+{
+  "main": "@modules/main",
+  "moduleDir": "modules",
+  "modules": {
+    "@modules/main": {
+      "path": "main"
+    }
+  },
+  "dependencies": {
+    "@scom/scom-configurator-settings": "*"
+  }
+}
