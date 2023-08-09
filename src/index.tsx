@@ -219,7 +219,6 @@ export default class ConfiguratorSettings extends Module {
     this.mdSettings.visible = true;
   }
 
-  // To be added
   private onChange = (result: boolean, data: any, action: any) => {
     if (result) {
       const commandIns = action.command(action, data);
@@ -296,11 +295,10 @@ export default class ConfiguratorSettings extends Module {
               const data = await form.getFormData();
               self.onConfirm(true, data, target)
             },
-            // To be added
-            // onChange: async () => {
-            //   const data = await form.getFormData();
-            //   self.onChange(true, data, target)
-            // },
+          },
+          onChange: async () => {
+            const data = await form.getFormData();
+            self.onChange(true, data, target)
           },
           dateTimeFormat: {
             date: 'YYYY-MM-DD',
