@@ -89,14 +89,13 @@ export default class ConfiguratorSettings extends Module {
     this._parentTags = value;
   }
 
-  // set showSaveBtn(value: boolean) {
-  //   this._showSaveBtn = value;
-  //   this.updateSaveBtn(value);
-  // }
+  set showSaveBtn(value: boolean) {
+    this._showSaveBtn = value;
+  }
 
-  // get showSaveBtn() {
-  //   return this._showSaveBtn;
-  // }
+  get showSaveBtn() {
+    return this._showSaveBtn;
+  }
 
   static async create(options?: ScomConfiguratorElement, parent?: Container) {
     let self = new this(parent, options);
@@ -107,14 +106,6 @@ export default class ConfiguratorSettings extends Module {
   constructor(parent?: Container, options?: ScomConfiguratorElement) {
     super(parent, options);
   }
-
-  // private updateSaveBtn(show: boolean) {
-  //   if (show) {
-  //     this.btnSave.visible = true;
-  //   } else {
-  //     this.btnSave.visible = false;
-  //   }
-  // }
 
   private get componentsData() {
     const searchVal = (this.inputSearch.value || '').toLowerCase();
@@ -228,6 +219,16 @@ export default class ConfiguratorSettings extends Module {
     this.mdSettings.visible = true;
   }
 
+  // To be added
+  private onChange = (result: boolean, data: any, action: any) => {
+    if (result) {
+      const commandIns = action.command(action, data);
+      commandHistory.execute(commandIns);
+    } else if (data?.errors) {
+      console.log(data.errors);
+    }
+  }
+
   private onSave = async () => {
     const data = this.builderTarget?.getData ? await this.builderTarget.getData() : this.item.properties;
     const tag = this.builderTarget?.getTag ? await this.builderTarget.getTag() : this.item.tag;
@@ -241,12 +242,26 @@ export default class ConfiguratorSettings extends Module {
     };
   }
 
-  private onConfirm = (result: boolean, data: any, action: any) => {
+  private onConfirm = async (result: boolean, data: any, action: any) => {
     if (result) {
       const commandIns = action.command(action, data);
       commandHistory.execute(commandIns);
     } else if (data?.errors) {
       console.log(data.errors);
+    }
+
+    // confirm btn handle confirm & save if no save btn
+    if (!this._showSaveBtn) {
+      const builderTargetData = this.builderTarget?.getData ? await this.builderTarget.getData() : this.item.properties;
+      const tag = this.builderTarget?.getTag ? await this.builderTarget.getTag() : this.item.tag;
+      if (this.direction) this.mdSettings.visible = false;
+      if (this.onSaveConfigData) {
+        this.onSaveConfigData({
+          path: this.currentPath,
+          properties: { componentId: Number(this.currentId), ...builderTargetData },
+          tag
+        });
+      };
     }
   }
 
@@ -280,7 +295,12 @@ export default class ConfiguratorSettings extends Module {
             onClick: async () => {
               const data = await form.getFormData();
               self.onConfirm(true, data, target)
-            }
+            },
+            // To be added
+            // onChange: async () => {
+            //   const data = await form.getFormData();
+            //   self.onChange(true, data, target)
+            // },
           },
           dateTimeFormat: {
             date: 'YYYY-MM-DD',
@@ -360,7 +380,7 @@ export default class ConfiguratorSettings extends Module {
             <i-vstack gap={10} width="calc(50% - 21px)" minWidth={400}>
               <i-label caption="Settings" font={{ size: '16px', bold: true }} />
               <i-panel id="pnlTabs" width="100%" />
-              <i-button id="btnSave" caption="Save" width={200} margin={{ left: 'auto', right: 'auto' }} padding={{ top: 8, bottom: 8 }} font={{ color: Theme.colors.primary.contrastText }} onClick={this.onSave} />
+              <i-button id="btnSave" caption="Save" visible={this._showSaveBtn} width={200} margin={{ left: 'auto', right: 'auto' }} padding={{ top: 8, bottom: 8 }} font={{ color: Theme.colors.primary.contrastText }} onClick={this.onSave} />
             </i-vstack>
           </i-hstack>
         </i-modal>

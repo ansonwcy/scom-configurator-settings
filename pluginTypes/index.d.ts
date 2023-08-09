@@ -77,6 +77,8 @@ declare module "@scom/scom-configurator-settings" {
         get direction(): boolean;
         get parentTags(): any;
         set parentTags(value: any);
+        set showSaveBtn(value: boolean);
+        get showSaveBtn(): boolean;
         static create(options?: ScomConfiguratorElement, parent?: Container): Promise<ConfiguratorSettings>;
         constructor(parent?: Container, options?: ScomConfiguratorElement);
         private get componentsData();
@@ -88,6 +90,7 @@ declare module "@scom/scom-configurator-settings" {
         private onSearch;
         private closeDetail;
         showDetail: (item: any) => Promise<void>;
+        private onChange;
         private onSave;
         private onConfirm;
         private renderTab;

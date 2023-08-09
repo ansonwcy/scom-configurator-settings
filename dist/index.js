@@ -214,13 +214,12 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
         set parentTags(value) {
             this._parentTags = value;
         }
-        // set showSaveBtn(value: boolean) {
-        //   this._showSaveBtn = value;
-        //   this.updateSaveBtn(value);
-        // }
-        // get showSaveBtn() {
-        //   return this._showSaveBtn;
-        // }
+        set showSaveBtn(value) {
+            this._showSaveBtn = value;
+        }
+        get showSaveBtn() {
+            return this._showSaveBtn;
+        }
         static async create(options, parent) {
             let self = new this(parent, options);
             await self.ready();
@@ -335,6 +334,16 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 }
                 this.mdSettings.visible = true;
             };
+            // To be added
+            this.onChange = (result, data, action) => {
+                if (result) {
+                    const commandIns = action.command(action, data);
+                    index_1.commandHistory.execute(commandIns);
+                }
+                else if (data === null || data === void 0 ? void 0 : data.errors) {
+                    console.log(data.errors);
+                }
+            };
             this.onSave = async () => {
                 var _a, _b;
                 const data = ((_a = this.builderTarget) === null || _a === void 0 ? void 0 : _a.getData) ? await this.builderTarget.getData() : this.item.properties;
@@ -350,13 +359,29 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 }
                 ;
             };
-            this.onConfirm = (result, data, action) => {
+            this.onConfirm = async (result, data, action) => {
+                var _a, _b;
                 if (result) {
                     const commandIns = action.command(action, data);
                     index_1.commandHistory.execute(commandIns);
                 }
                 else if (data === null || data === void 0 ? void 0 : data.errors) {
                     console.log(data.errors);
+                }
+                // confirm btn handle confirm & save if no save btn
+                if (!this._showSaveBtn) {
+                    const builderTargetData = ((_a = this.builderTarget) === null || _a === void 0 ? void 0 : _a.getData) ? await this.builderTarget.getData() : this.item.properties;
+                    const tag = ((_b = this.builderTarget) === null || _b === void 0 ? void 0 : _b.getTag) ? await this.builderTarget.getTag() : this.item.tag;
+                    if (this.direction)
+                        this.mdSettings.visible = false;
+                    if (this.onSaveConfigData) {
+                        this.onSaveConfigData({
+                            path: this.currentPath,
+                            properties: Object.assign({ componentId: Number(this.currentId) }, builderTargetData),
+                            tag
+                        });
+                    }
+                    ;
                 }
             };
             this.renderTab = (tabs, target, data, title) => {
@@ -390,7 +415,12 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                                 onClick: async () => {
                                     const data = await form.getFormData();
                                     self.onConfirm(true, data, target);
-                                }
+                                },
+                                // To be added
+                                // onChange: async () => {
+                                //   const data = await form.getFormData();
+                                //   self.onChange(true, data, target)
+                                // },
                             },
                             dateTimeFormat: {
                                 date: 'YYYY-MM-DD',
@@ -423,13 +453,6 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 tabs.activeTabIndex = 0;
             };
         }
-        // private updateSaveBtn(show: boolean) {
-        //   if (show) {
-        //     this.btnSave.visible = true;
-        //   } else {
-        //     this.btnSave.visible = false;
-        //   }
-        // }
         get componentsData() {
             const searchVal = (this.inputSearch.value || '').toLowerCase();
             if (!searchVal)
@@ -458,7 +481,7 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                         this.$render("i-vstack", { gap: 10, width: "calc(50% - 21px)", minWidth: 400 },
                             this.$render("i-label", { caption: "Settings", font: { size: '16px', bold: true } }),
                             this.$render("i-panel", { id: "pnlTabs", width: "100%" }),
-                            this.$render("i-button", { id: "btnSave", caption: "Save", width: 200, margin: { left: 'auto', right: 'auto' }, padding: { top: 8, bottom: 8 }, font: { color: Theme.colors.primary.contrastText }, onClick: this.onSave }))))));
+                            this.$render("i-button", { id: "btnSave", caption: "Save", visible: this._showSaveBtn, width: 200, margin: { left: 'auto', right: 'auto' }, padding: { top: 8, bottom: 8 }, font: { color: Theme.colors.primary.contrastText }, onClick: this.onSave }))))));
         }
     };
     __decorate([
