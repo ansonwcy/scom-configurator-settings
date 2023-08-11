@@ -334,7 +334,6 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                 }
                 this.mdSettings.visible = true;
             };
-            // To be added
             this.onChange = (result, data, action) => {
                 if (result) {
                     const commandIns = action.command(action, data);
@@ -416,11 +415,10 @@ define("@scom/scom-configurator-settings", ["require", "exports", "@ijstech/comp
                                     const data = await form.getFormData();
                                     self.onConfirm(true, data, target);
                                 },
-                                // To be added
-                                // onChange: async () => {
-                                //   const data = await form.getFormData();
-                                //   self.onChange(true, data, target)
-                                // },
+                            },
+                            onChange: async () => {
+                                const data = await form.getFormData();
+                                self.onChange(true, data, target);
                             },
                             dateTimeFormat: {
                                 date: 'YYYY-MM-DD',
